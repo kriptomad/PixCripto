@@ -1,4 +1,6 @@
-# PixCripto
+![Blockchain](https://img.shields.io/badge/Blockchain-F7931A?style=for-the-badge&logo=bitcoin&logoColor=white)
+
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
 Sistema de pagamento instantâneo **100% descentralizado**, inspirado no **Pix** (praticidade
 de uso, QR code) combinado com os conceitos de **Bitcoin/Ethereum** (blockchain, mineração
