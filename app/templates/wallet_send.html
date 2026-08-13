@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}PixCripto - Enviar{% endblock %}
+{% block content %}
+<div id="alert-box"></div>
+<div class="card">
+    <h2>Enviar PXC</h2>
+    <label>Endereço de destino</label>
+    <input id="send-recipient" placeholder="Endereço do destinatário">
+    <label>Valor (PXC)</label>
+    <input id="send-amount" type="number" step="0.00000001" min="0">
+    <label>Memo (opcional, criptografado ponta-a-ponta)</label>
+    <input id="send-memo" placeholder="Mensagem/referência opcional">
+    <label>Taxa (fee, opcional - prioriza mineração)</label>
+    <input id="send-fee" type="number" step="0.00000001" min="0" value="0">
+    <button onclick="pxcSend()">Enviar</button>
+</div>
+<div class="card">
+    <h3>Pagar via QR code</h3>
+    <label>Cole o payload do QR code</label>
+    <textarea id="qr-payload" rows="2"></textarea>
+    <button onclick="pxcPayQr()">Pagar QR code</button>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const wallet = pxcRequireWalletOrRedirect();
+
+async function pxcSend() {
+    const recipient = document.getElementById("send-recipient").value.trim();
+    const amount = parseFloat(document.getElementById("send-amount").value);
+    const memo = document.getElementById("send-memo").value;
+    const fee = parseFloat(document.getElementById("send-fee").value || "0");
+    try {
+        const data = await pxcApi("/transaction/send", { method: "POST", body: {
+            sender_private_key: wallet.private_key, sender_public_key: wallet.public_key,
+            recipient, amount, memo, fee,
+        }});
+        pxcShowAlert("alert-box", `Transação enviada! tx_id: ${data.tx_id}`, "success");
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+async function pxcPayQr() {
+    const qr_payload = document.getElementById("qr-payload").value.trim();
+    try {
+        const data = await pxcApi("/transaction/pay-qrcode", { method: "POST", body: {
+            sender_private_key: wallet.private_key, sender_public_key: wallet.public_key, qr_payload,
+        }});
+        pxcShowAlert("alert-box", `Pagamento via QR aceito! tx_id: ${data.tx_id}`, "success");
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+</script>
+{% endblock %}

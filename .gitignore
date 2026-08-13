@@ -1,0 +1,41 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- Ambiente / segredos ---
+.env
+*.env.local
+.venv/
+venv/
+data/.kyc_master.key
+data/.admin_master.key
+*.key
+*.pem
+
+# --- Dados runtime / bancos (nunca versionar estado da chain local) ---
+data/
+kyc_documents/
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# --- Frontend (Node/Vite) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+node_modules/
+
+# --- Distribuição gerada ---
+dist/
+build/
+
+# --- IDE / OS ---
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

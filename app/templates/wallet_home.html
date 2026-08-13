@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}PixCripto - Carteira{% endblock %}
+{% block content %}
+<div id="alert-box"></div>
+
+<div class="card" id="no-wallet-card">
+    <h1>Bem-vindo ao PixCripto</h1>
+    <p>Crie uma carteira nova (com seed phrase HD, estilo Bitcoin/MetaMask) ou importe uma existente.</p>
+    <button onclick="pxcCreateNewWallet()">Criar nova carteira</button>
+    <button class="secondary" onclick="document.getElementById('import-form').style.display='block'">Importar seed phrase existente</button>
+
+    <div id="import-form" style="display:none; margin-top:20px;">
+        <label>Seed phrase (12 ou 24 palavras)</label>
+        <textarea id="import-mnemonic" rows="3" placeholder="palavra1 palavra2 ..."></textarea>
+        <label>Índice da conta</label>
+        <input id="import-index" type="number" value="0" min="0">
+        <button onclick="pxcImportWallet()">Importar</button>
+    </div>
+</div>
+
+<div class="card" id="wallet-card" style="display:none;">
+    <h2>Sua carteira</h2>
+    <p>Endereço:</p>
+    <p class="mono" id="wallet-address"></p>
+    <p class="balance" id="wallet-balance">-- PXC</p>
+    <button onclick="pxcRefreshBalance()">Atualizar saldo</button>
+    <button class="secondary" onclick="pxcRevealSeed()">Ver seed phrase / chave privada</button>
+    <button class="secondary" onclick="pxcLogout()">Sair (limpar deste navegador)</button>
+    <div id="seed-reveal" style="display:none; margin-top:16px;">
+        <label>Seed phrase</label>
+        <p class="mono" id="reveal-mnemonic"></p>
+        <label>Chave privada (hex)</label>
+        <p class="mono" id="reveal-private-key"></p>
+        <div class="alert alert-warning">Nunca compartilhe isto com ninguém. Quem tiver acesso controla seus fundos.</div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function pxcCreateNewWallet() {
+    try {
+        const data = await pxcApi("/wallet/hd/create", { method: "POST", body: { strength_bits: 128 } });
+        pxcSaveWallet({
+            address: data.address, public_key: data.public_key, private_key: data.private_key,
+            mnemonic: data.mnemonic, account_index: 0,
+        });
+        pxcShowAlert("alert-box", "Carteira criada! Guarde sua seed phrase com segurança.", "success");
+        pxcRenderWallet();
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+async function pxcImportWallet() {
+    const mnemonic = document.getElementById("import-mnemonic").value.trim();
+    const account_index = parseInt(document.getElementById("import-index").value || "0");
+    try {
+        const data = await pxcApi("/wallet/hd/derive", { method: "POST", body: { mnemonic, account_index } });
+        pxcSaveWallet({
+            address: data.address, public_key: data.public_key, private_key: data.private_key,
+            mnemonic, account_index,
+        });
+        pxcShowAlert("alert-box", "Carteira importada com sucesso!", "success");
+        pxcRenderWallet();
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+async function pxcRefreshBalance() {
+    const wallet = pxcLoadWallet();
+    if (!wallet) return;
+    try {
+        const data = await pxcApi(`/wallet/${wallet.address}/balance`);
+        document.getElementById("wallet-balance").innerText = pxcFormatAmount(data.balance) + " PXC";
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+function pxcRevealSeed() {
+    const wallet = pxcLoadWallet();
+    document.getElementById("reveal-mnemonic").innerText = wallet.mnemonic || "(importada via chave privada direta)";
+    document.getElementById("reveal-private-key").innerText = wallet.private_key;
+    document.getElementById("seed-reveal").style.display = "block";
+}
+
+function pxcLogout() {
+    pxcClearWallet();
+    pxcRenderWallet();
+}
+
+function pxcRenderWallet() {
+    const wallet = pxcLoadWallet();
+    if (wallet) {
+        document.getElementById("no-wallet-card").style.display = "none";
+        document.getElementById("wallet-card").style.display = "block";
+        document.getElementById("wallet-address").innerText = wallet.address;
+        pxcRefreshBalance();
+    } else {
+        document.getElementById("no-wallet-card").style.display = "block";
+        document.getElementById("wallet-card").style.display = "none";
+    }
+}
+
+pxcRenderWallet();
+</script>
+{% endblock %}

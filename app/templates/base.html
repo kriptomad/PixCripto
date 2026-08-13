@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PixCripto Wallet{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" href="/wallet">PixCripto <span>PXC</span></a>
+        <nav>
+            <a href="/wallet">Carteira</a>
+            <a href="/wallet/send">Enviar</a>
+            <a href="/wallet/receive">Receber</a>
+            <a href="/wallet/history">Histórico</a>
+            <a href="/wallet/market">Mercado</a>
+        </nav>
+    </header>
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="footer">
+        Sistema de pagamento 100% descentralizado, ancorado em ouro. Rede: <span id="footer-env">{{ environment }}</span>
+    </footer>
+    <script src="/static/js/pixcripto.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

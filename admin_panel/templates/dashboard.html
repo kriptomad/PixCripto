@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>PixCripto - Painel de Administração</title>
+    <style>
+        body { font-family: "Segoe UI", system-ui, sans-serif; background: #0d1117; color: #e6edf3; margin: 0; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
+        h1 { color: #d4af37; }
+        .warn { background: rgba(248,81,73,0.15); border: 1px solid #f85149; color: #f85149; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; margin-bottom: 20px; }
+        label { display: block; margin: 10px 0 4px; color: #8b949e; font-size: 0.85em; }
+        input, select { width: 100%; padding: 8px; background: #0b0f14; border: 1px solid #30363d; border-radius: 6px; color: #e6edf3; }
+        button { background: #d4af37; color: #111; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+        button.secondary { background: #21262d; color: #e6edf3; border: 1px solid #30363d; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 6px; border-bottom: 1px solid #30363d; font-size: 0.85em; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .mono { font-family: Consolas, monospace; word-break: break-all; }
+        #build-output { white-space: pre-wrap; background: #0b0f14; padding: 12px; border-radius: 6px; margin-top: 12px; max-height: 300px; overflow: auto; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🛠️ Painel de Administração PixCripto</h1>
+    <div class="warn">
+        Este painel NÃO faz parte da distribuição pública (não é compilado/empacotado por
+        <code>scripts/build_distribution.py</code>). Nunca o exponha na internet - rode apenas
+        localmente na sua máquina de operação.
+    </div>
+
+    <div class="card">
+        <h2>Configurações do node (.env)</h2>
+        <form method="post" action="/settings/save">
+            <div class="grid">
+                <div>
+                    <label>Ambiente</label>
+                    <select name="PIXCRIPTO_ENV">
+                        {% for env in valid_environments %}
+                        <option value="{{ env }}" {% if env_values.get('PIXCRIPTO_ENV', settings.environment) == env %}selected{% endif %}>{{ env }}</option>
+                        {% endfor %}
+                    </select>
+                    <label>Host HTTP</label>
+                    <input name="PIXCRIPTO_HTTP_HOST" value="{{ env_values.get('PIXCRIPTO_HTTP_HOST', settings.http_host) }}">
+                    <label>Porta HTTP</label>
+                    <input name="PIXCRIPTO_HTTP_PORT" value="{{ env_values.get('PIXCRIPTO_HTTP_PORT', settings.http_port) }}">
+                    <label>CORS origins (separado por vírgula, ou *)</label>
+                    <input name="PIXCRIPTO_CORS_ORIGINS" value="{{ env_values.get('PIXCRIPTO_CORS_ORIGINS', '*') }}">
+                    <label>Rate limit (requisições)</label>
+                    <input name="PIXCRIPTO_RATE_LIMIT_REQUESTS" value="{{ env_values.get('PIXCRIPTO_RATE_LIMIT_REQUESTS', settings.rate_limit_requests) }}">
+                    <label>Rate limit (janela em segundos)</label>
+                    <input name="PIXCRIPTO_RATE_LIMIT_WINDOW" value="{{ env_values.get('PIXCRIPTO_RATE_LIMIT_WINDOW', settings.rate_limit_window_seconds) }}">
+                    <label>Limite de KYC (PXC sem verificação)</label>
+                    <input name="PIXCRIPTO_KYC_THRESHOLD_PXC" value="{{ env_values.get('PIXCRIPTO_KYC_THRESHOLD_PXC', settings.kyc_required_above_pxc) }}">
+                </div>
+                <div>
+                    <label>Host P2P</label>
+                    <input name="PIXCRIPTO_P2P_HOST" value="{{ env_values.get('PIXCRIPTO_P2P_HOST', settings.p2p_host) }}">
+                    <label>Porta P2P</label>
+                    <input name="PIXCRIPTO_P2P_PORT" value="{{ env_values.get('PIXCRIPTO_P2P_PORT', settings.p2p_port) }}">
+                    <label>Peers explícitos (host:porta, separados por vírgula)</label>
+                    <input name="PIXCRIPTO_P2P_PEERS" value="{{ env_values.get('PIXCRIPTO_P2P_PEERS', '') }}">
+                    <label>DNS seeds (hostnames, separados por vírgula)</label>
+                    <input name="PIXCRIPTO_DNS_SEEDS" value="{{ env_values.get('PIXCRIPTO_DNS_SEEDS', '') }}">
+                    <label>Descoberta de peers habilitada</label>
+                    <select name="PIXCRIPTO_PEER_DISCOVERY">
+                        <option value="true" {% if env_values.get('PIXCRIPTO_PEER_DISCOVERY','true')=='true' %}selected{% endif %}>true</option>
+                        <option value="false" {% if env_values.get('PIXCRIPTO_PEER_DISCOVERY','true')=='false' %}selected{% endif %}>false</option>
+                    </select>
+                    <label>API estilo exchange habilitada</label>
+                    <select name="PIXCRIPTO_EXCHANGE_API_ENABLED">
+                        <option value="true" {% if env_values.get('PIXCRIPTO_EXCHANGE_API_ENABLED','true')=='true' %}selected{% endif %}>true</option>
+                        <option value="false" {% if env_values.get('PIXCRIPTO_EXCHANGE_API_ENABLED','true')=='false' %}selected{% endif %}>false</option>
+                    </select>
+                    <label>Conformidade (KYC/AML) habilitada</label>
+                    <select name="PIXCRIPTO_COMPLIANCE_ENABLED">
+                        <option value="true" {% if env_values.get('PIXCRIPTO_COMPLIANCE_ENABLED','true')=='true' %}selected{% endif %}>true</option>
+                        <option value="false" {% if env_values.get('PIXCRIPTO_COMPLIANCE_ENABLED','true')=='false' %}selected{% endif %}>false</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit">Salvar .env (requer reiniciar o node)</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Peers curados (seeds.json)</h2>
+        <table>
+            <thead><tr><th>Peer</th><th></th></tr></thead>
+            <tbody>
+            {% for peer in seeds %}
+                <tr><td class="mono">{{ peer }}</td>
+                    <td><form method="post" action="/seeds/remove" style="margin:0;">
+                        <input type="hidden" name="peer" value="{{ peer }}">
+                        <button class="secondary" type="submit">Remover</button>
+                    </form></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <form method="post" action="/seeds/add">
+            <label>Adicionar peer (host:porta)</label>
+            <input name="peer" placeholder="203.0.113.10:9333">
+            <button type="submit">Adicionar</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Conformidade regulatória (KYC/AML)</h2>
+        <h3>Lista de sanções</h3>
+        <form method="post" action="/compliance/sanctions/add">
+            <label>Endereço/entrada</label>
+            <input name="entry" placeholder="Endereço PixCripto">
+            <label>Motivo</label>
+            <input name="reason" placeholder="Motivo do bloqueio">
+            <button type="submit">Adicionar à lista de sanções</button>
+        </form>
+        <form method="post" action="/compliance/sanctions/remove" style="margin-top:8px;">
+            <label>Remover entrada</label>
+            <input name="entry" placeholder="Endereço a remover">
+            <button class="secondary" type="submit">Remover</button>
+        </form>
+
+        <h3>Relatório de Atividade Suspeita (SAR)</h3>
+        <table>
+            <thead><tr><th>Evento</th><th>Endereço</th><th>Detalhes</th><th>Severidade</th></tr></thead>
+            <tbody>
+            {% for e in sar_events %}
+                <tr><td>{{ e.event_type }}</td><td class="mono">{{ e.address }}</td><td>{{ e.details }}</td><td>{{ e.severity }}</td></tr>
+            {% else %}
+                <tr><td colspan="4">Nenhum alerta registrado ainda.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Honeypot (tentativas de exploração)</h2>
+        <table>
+            <thead><tr><th>IP</th><th>Score de ameaça</th></tr></thead>
+            <tbody>
+            {% for s in honeypot_report.top_suspects %}
+                <tr><td class="mono">{{ s.ip }}</td><td>{{ s.threat_score }}</td></tr>
+            {% else %}
+                <tr><td colspan="2">Nenhuma tentativa registrada ainda.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Distribuição / Release</h2>
+        <p>Gera <code>dist/app/</code> (bytecode-only, sem <code>.py</code>, sem este painel, sem <code>.env</code>/<code>seeds.json</code>) pronto para lançar na rede real.</p>
+        <button onclick="pxcBuildDistribution()">Gerar distribuição agora</button>
+        <div id="build-output"></div>
+    </div>
+</div>
+<script>
+async function pxcBuildDistribution() {
+    const out = document.getElementById("build-output");
+    out.innerText = "Gerando...";
+    const resp = await fetch("/build/distribution", { method: "POST" });
+    const data = await resp.json();
+    out.innerText = `Código de saída: ${data.returncode}\n\n${data.stdout}\n${data.stderr}`;
+}
+</script>
+</body>
+</html>

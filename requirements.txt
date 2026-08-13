@@ -1,0 +1,23 @@
+fastapi>=0.115.0        # >= corrige CVE-2024-24762 (python-multipart ReDoS) transitivamente
+uvicorn[standard]>=0.30.0
+starlette>=0.40.0        # >= corrige CVE-2024-47874 (DoS via form/multipart parsing)
+h11>=0.16.0              # corrige CVE-2025-43859 (HTTP request smuggling)
+ecdsa>=0.19.0            # mitigacao parcial de CVE-2024-23342 (Minerva timing attack);
+                         # a mitigacao definitiva neste projeto e usar sign_deterministic
+                         # (RFC 6979), ja aplicado em app/crypto_utils.py
+base58>=2.1
+qrcode[pil]>=7.4
+pydantic>=2.5
+jinja2>=3.1               # renderizacao da UI web de carteira (Jinja2Templates)
+python-multipart>=0.0.9   # necessario para formularios (Form) do Painel de Administracao
+numpy>=1.26
+cryptography>=42.0       # usado para reserva de utilidades criptograficas adicionais
+# opcional - mineracao acelerada em GPU AMD (ROCm)/NVIDIA/Intel via OpenCL:
+# pyopencl>=2024.1
+# opcional - mineracao acelerada em GPU NVIDIA via CUDA (requer CUDA Toolkit):
+# pycuda>=2024.1
+
+# --- dependencias de TESTE (nao necessarias em producao) ---
+pytest>=8.0
+httpx>=0.27               # necessario para fastapi.testclient.TestClient nesta versao do starlette
+websockets>=12.0          # usado para testar o endpoint /ws/events end-to-end

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}PixCripto - Receber{% endblock %}
+{% block content %}
+<div id="alert-box"></div>
+<div class="card">
+    <h2>Receber PXC</h2>
+    <p>Endereço:</p>
+    <p class="mono" id="my-address"></p>
+    <label>Valor solicitado (opcional)</label>
+    <input id="req-amount" type="number" step="0.00000001" min="0">
+    <label>Memo (opcional)</label>
+    <input id="req-memo" placeholder="Referência da cobrança">
+    <button onclick="pxcGenerateQr()">Gerar QR code de cobrança</button>
+    <div id="qr-result" style="margin-top:20px;"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const wallet = pxcRequireWalletOrRedirect();
+if (wallet) document.getElementById("my-address").innerText = wallet.address;
+
+async function pxcGenerateQr() {
+    const amount = document.getElementById("req-amount").value;
+    const memo = document.getElementById("req-memo").value;
+    const params = new URLSearchParams();
+    if (amount) params.set("amount", amount);
+    if (memo) params.set("memo", memo);
+    try {
+        const data = await pxcApi(`/wallet/${wallet.address}/qrcode?${params.toString()}`);
+        document.getElementById("qr-result").innerHTML = `
+            <div class="qr-box"><img src="data:image/png;base64,${data.qrcode_png_base64}" alt="QR code"></div>
+            <p>Payload (copia e cola):</p>
+            <p class="mono">${data.payload}</p>
+        `;
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+</script>
+{% endblock %}

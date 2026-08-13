@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}PixCripto - Mercado{% endblock %}
+{% block content %}
+<div id="alert-box"></div>
+<div class="card">
+    <h2>Preço PXC (ancorado em ouro)</h2>
+    <p class="balance" id="price-brl">-- BRL</p>
+    <p id="price-details"></p>
+</div>
+<div class="card">
+    <h3>Comprar PXC</h3>
+    <label>Valor em Reais (BRL)</label>
+    <input id="buy-amount-brl" type="number" step="0.01" min="0">
+    <button onclick="pxcQuotePurchase()">Cotar compra</button>
+    <div id="quote-result"></div>
+</div>
+<div class="card">
+    <h3>Vender / Liquidar PXC</h3>
+    <label>Valor (PXC)</label>
+    <input id="sell-amount" type="number" step="0.00000001" min="0">
+    <button onclick="pxcSell()">Vender</button>
+    <button class="secondary" onclick="pxcLiquidate()">Liquidar (saque imediato)</button>
+</div>
+<div class="card">
+    <h3>Atividade do mercado</h3>
+    <div id="market-activity"></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const wallet = pxcLoadWallet();
+
+async function pxcLoadPrice() {
+    try {
+        const data = await pxcApi("/market/gold-price");
+        document.getElementById("price-brl").innerText = pxcFormatAmount(data.pxc_brl_rate) + " BRL / PXC";
+        document.getElementById("price-details").innerText =
+            `Ouro: US$ ${data.gold_usd_per_oz}/oz · USD/BRL: ${data.usd_brl} · variação: ${data.delta_pct_gold}%`;
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+async function pxcQuotePurchase() {
+    const amount_brl = parseFloat(document.getElementById("buy-amount-brl").value);
+    try {
+        const data = await pxcApi("/purchase/quote", { method: "POST", body: { amount_brl } });
+        document.getElementById("quote-result").innerHTML =
+            `<div class="alert alert-success">Você recebe ${pxcFormatAmount(data.coins_credited)} PXC (taxa: ${pxcFormatAmount(data.fee_brl)} BRL)</div>`;
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+async function pxcSell() {
+    if (!wallet) { window.location.href = "/wallet"; return; }
+    const amount = parseFloat(document.getElementById("sell-amount").value);
+    try {
+        const data = await pxcApi("/market/sell", { method: "POST", body: {
+            sender_private_key: wallet.private_key, sender_public_key: wallet.public_key, amount,
+        }});
+        pxcShowAlert("alert-box", `Venda registrada! Você recebe ${pxcFormatAmount(data.payout_brl)} BRL`, "success");
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+async function pxcLiquidate() {
+    if (!wallet) { window.location.href = "/wallet"; return; }
+    const amount = parseFloat(document.getElementById("sell-amount").value);
+    try {
+        const data = await pxcApi("/market/liquidate", { method: "POST", body: {
+            sender_private_key: wallet.private_key, sender_public_key: wallet.public_key, amount,
+        }});
+        pxcShowAlert("alert-box", `Liquidação registrada! Você recebe ${pxcFormatAmount(data.payout_brl)} BRL`, "success");
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+async function pxcLoadMarketActivity() {
+    try {
+        const data = await pxcApi("/explorer/market-activity?top_n=5");
+        document.getElementById("market-activity").innerHTML = `
+            <p>Transações totais: ${data.total_transactions}</p>
+            <p>Volume total: ${pxcFormatAmount(data.total_volume_pxc)} PXC</p>
+            <p>Oferta circulante: ${pxcFormatAmount(data.circulating_supply)} PXC</p>
+            <p>Índice de concentração (HHI): ${data.wallet_concentration_hhi}</p>
+        `;
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+pxcLoadPrice();
+pxcLoadMarketActivity();
+</script>
+{% endblock %}

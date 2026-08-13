@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}PixCripto - Histórico{% endblock %}
+{% block content %}
+<div id="alert-box"></div>
+<div class="card">
+    <h2>Histórico de transações</h2>
+    <table>
+        <thead><tr><th>Direção</th><th>Contraparte</th><th>Valor</th><th>Tipo</th><th>Status</th></tr></thead>
+        <tbody id="history-body"></tbody>
+    </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const wallet = pxcRequireWalletOrRedirect();
+
+async function pxcLoadHistory() {
+    try {
+        const data = await pxcApi(`/explorer/address/${wallet.address}`);
+        const rows = [];
+        for (const tx of data.confirmed_transactions) {
+            const counterparty = tx.direction === "saida" ? tx.recipient : tx.sender;
+            rows.push(`<tr><td>${tx.direction}</td><td class="mono">${counterparty}</td><td>${pxcFormatAmount(tx.amount)}</td><td>${tx.tx_type}</td><td>confirmada (bloco ${tx.block_index})</td></tr>`);
+        }
+        for (const tx of data.pending_transactions) {
+            const counterparty = tx.direction === "saida" ? tx.recipient : tx.sender;
+            rows.push(`<tr><td>${tx.direction}</td><td class="mono">${counterparty}</td><td>${pxcFormatAmount(tx.amount)}</td><td>${tx.tx_type}</td><td>pendente</td></tr>`);
+        }
+        document.getElementById("history-body").innerHTML = rows.join("") || "<tr><td colspan='5'>Nenhuma transação ainda.</td></tr>";
+    } catch (e) { pxcShowAlert("alert-box", e.message); }
+}
+
+pxcLoadHistory();
+</script>
+{% endblock %}
