@@ -19,5 +19,5 @@ cryptography>=42.0       # usado para reserva de utilidades criptograficas adici
 
 # --- dependencias de TESTE (nao necessarias em producao) ---
 pytest>=8.0
-httpx>=0.27               # necessario para fastapi.testclient.TestClient nesta versao do starlette
+httpx>=0.28.1               # necessario para fastapi.testclient.TestClient nesta versao do starlette
 websockets>=12.0          # usado para testar o endpoint /ws/events end-to-end
