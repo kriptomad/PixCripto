@@ -6,12 +6,6 @@ Sistema de pagamento instantâneo **100% descentralizado**, inspirado no **Pix**
 de uso, QR code) combinado com os conceitos de **Bitcoin/Ethereum** (blockchain, mineração
 com Proof-of-Work, criptografia assimétrica por transação).
 
-> ⚠️ **Nota técnica importante**: o pedido original menciona "CUDA otimizado para AMD".
-> CUDA é uma tecnologia **exclusiva da NVIDIA** — placas AMD não a executam. O equivalente
-> AMD é **OpenCL/ROCm/HIP**. Por isso o motor de mineração foi implementado sobre
-> **OpenCL**, que roda em GPUs AMD, NVIDIA e Intel (o mesmo código funciona nos três,
-> sem vendor lock-in). Se não houver GPU/driver OpenCL disponível, o sistema cai
-> automaticamente para mineração em CPU — nenhuma funcionalidade fica bloqueada.
 
 ## Arquitetura
 
